@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif; /* Using Inter font */
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    #app-container {
+      width: 100%;
+      max-width: 900px; /* Max width for better readability on large screens */
+      background-color: #1a1a1a;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      box-sizing: border-box;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #00e676; /* Green accent color */
+      margin-bottom: 20px;
+    }
+
+    .section {
+      margin-top: 30px;
+      border: 1px solid #333;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #1e1e1e;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    input, select, button {
+      margin: 8px;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      background: #2a2a2a;
+      color: white;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    input:focus, select:focus, button:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #00e676;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #00c853; /* Brighter green for buttons */
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #00e676;
+      transform: translateY(-2px);
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      border-radius: 8px; /* Rounded corners for table */
+      overflow: hidden; /* Ensures rounded corners apply to content */
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      text-align: center;
+    }
+
+    th {
+      background-color: #2a2a2a;
+      color: #00e676;
+      font-weight: bold;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .profit-positive {
+      color: lightgreen;
+    }
+
+    .profit-negative {
+      color: red;
+    }
+
+    /* Home Screen Specific Styles */
+    #homeScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px; /* Space between sections on home screen */
+    }
+
+    #overallProfit {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #overallProfit span {
+      color: #00e676;
+    }
+
+    #navigationIcons {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 30px;
+      flex-wrap: wrap; /* Allow icons to wrap on smaller screens */
+    }
+
+    .nav-icon {
+      background-color: #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      min-width: 120px; /* Ensure icons have a minimum size */
+      text-align: center;
+    }
+
+    .nav-icon:hover {
+      background-color: #3a3a3a;
+      transform: translateY(-5px);
+    }
+
+    .nav-icon span {
+      font-size: 3em; /* Larger emoji icons */
+      margin-bottom: 10px;
+    }
+
+    .nav-icon p {
+      margin: 0;
+      font-size: 1.1em;
+      color: #ffffff;
+    }
+
+    /* Chart specific styles - FIX APPLIED HERE */
+    #profitChartContainer {
+      width: 100%;
+      max-width: 700px; /* Max width for the chart */
+      margin: 20px auto;
+      background-color: #2a2a2a;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      height: 300px; /* Fixed height for the container */
+      display: flex; /* Use flex to center canvas */
+      justify-content: center;
+      align-items: center;
+      flex-direction: column; /* Added to stack title and canvas */
+    }
+
+    canvas {
+      background-color: #2a2a2a; /* Chart background */
+      border-radius: 8px;
+      max-width: 100%; /* Ensure canvas doesn't overflow its container width */
+      max-height: 100%; /* Ensure canvas doesn't overflow its container height */
+    }
+
+    /* Back to Home Button */
+    .back-home-button {
+      background-color: #424242;
+      margin-top: 20px;
+      display: block;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .back-home-button:hover {
+      background-color: #525252;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- Home Screen Section -->
+    <div id="homeScreen" class="page-section">
+      <h1>🏠 Home Dashboard</h1>
+
+      <div class="section">
+        <h2>💰 Overall Profit</h2>
+        <p id="overallProfit">Total: <span class="profit-positive">₹ 0.00</span></p>
+      </div>
+
+      <div class="section" id="profitChartContainer">
+        <!-- Removed the <h2> tag here -->
+        <canvas id="profitChart"></canvas>
+      </div>
+
+      <div class="section">
+        <h2>Tools</h2>
+        <div id="navigationIcons">
+          <div class="nav-icon" onclick="showPage('tradeJournal')">
+            <span>📝</span>
+            <p>Trade Journal</p>
+          </div>
+          <div class="nav-icon" onclick="showPage('profitCalculator')">
+            <span>🧮</span>
+            <p>Profit Calculator</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trade Journal Section (Existing content) -->
+    <div id="tradeJournal" class="page-section" style="display:none;">
+      <h1>📝 Trade Journal</h1>
+
+      <div class="section">
+        <h2>👤 Profiles</h2>
+        <select id="profileSelect"></select>
+        <button onclick="addProfile()">➕ Add Profile</button>
+        <button onclick="deleteProfile()">🗑️ Delete Profile</button>
+      </div>
+
+      <div class="section">
+        <h2>➕ Add Trade</h2>
+        <input id="symbol" placeholder="Symbol (e.g., BTC)" />
+        <input type="number" id="buy" placeholder="Buy Price" />
+        <input type="number" id="sell" placeholder="Sell Price" />
+        <input type="number" id="amountUsed" placeholder="Amount Used ₹" />
+        <input type="number" id="leverage" placeholder="Leverage (e.g., 10)" />
+        <select id="direction">
+          <option value="long">Long</option>
+          <option value="short">Short</option>
+        </select>
+        <button onclick="addTrade()">✅ Add Trade</button>
+      </div>
+
+      <div class="section">
+        <h2>📈 Trades for Profile: <span id="currentProfile"></span></h2>
+        <table id="tradesTable">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th>Direction</th>
+              <th>Amount ₹</th>
+              <th>Leverage</th>
+              <th>Profit ₹</th>
+              <th>Profit %</th>
+              <th>Date</th>
+              <th>🗑️</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button onclick="showPage('homeScreen')" class="back-home-button">⬅️ Back to Home</button>
+    </div>
+
+    <!-- Profit Calculator Section (Existing content, renamed title) -->
+    <div id="profitCalculator" class="page-section" style="display:none;">
+      <h1>🧮 Profit Calculator</h1>
+
+      <div class="section">
+        <h2>🔢 Percentage Calculator</h2>
+        <input type="number" id="percentValue" placeholder="Percentage (e.g., 10)" /> % of 
+        <input type="number" id="baseValue" placeholder="Number (e.g., 5000)" />
+        <button onclick="calculatePercentage()">🧮 Calculate</button>
+        <p>Result: <span id="percentageResult"></span></p>
+      </div>
+      <button onclick="showPage('homeScreen')" class="back-home-button">⬅️ Back to Home</button>
+    </div>
+  </div>
+
+  <script>
+    let profiles = {};
+    let currentProfile = "";
+    let profitChartInstance = null; // To hold the Chart.js instance
+
+    // --- Data Persistence (using localStorage) ---
+    function saveProfiles() {
+      localStorage.setItem('tradingProfiles', JSON.stringify(profiles));
+    }
+
+    function loadProfiles() {
+      const storedProfiles = localStorage.getItem('tradingProfiles');
+      if (storedProfiles) {
+        profiles = JSON.parse(storedProfiles);
+        // Ensure profits are calculated correctly after loading,
+        // and add 'date' if it's missing from old entries
+        for (const profileName in profiles) {
+          profiles[profileName] = profiles[profileName].map(trade => {
+            if (typeof trade.profit === 'undefined' || typeof trade.profitPercent === 'undefined') {
+              // Recalculate if profit/profitPercent are missing (for old data)
+              let profitPercent = trade.direction === "long" ? ((trade.sell - trade.buy) / trade.buy) * 100 : ((trade.buy - trade.sell) / trade.buy) * 100;
+              let profit = (profitPercent / 100) * trade.amount * trade.leverage;
+              return { ...trade, profit, profitPercent };
+            }
+            if (!trade.date) { // Add current date if missing
+                trade.date = new Date().toISOString().split('T')[0];
+            }
+            return trade;
+          });
+        }
+      }
+      // Set current profile to the first one if available
+      currentProfile = Object.keys(profiles)[0] || "";
+      updateProfileSelect();
+      updateTrades();
+      updateOverallProfit();
+      renderProfitChart();
+    }
+
+    // --- Page Navigation ---
+    function showPage(pageId) {
+      document.querySelectorAll('.page-section').forEach(section => {
+        section.style.display = 'none';
+      });
+      document.getElementById(pageId).style.display = 'flex'; // Use flex for homeScreen
+      if (pageId === 'tradeJournal' || pageId === 'profitCalculator') {
+        document.getElementById(pageId).style.flexDirection = 'column'; // Ensure journal and calculator are column
+      }
+      if (pageId === 'homeScreen') {
+        updateOverallProfit();
+        renderProfitChart();
+      }
+    }
+
+    // --- Profile Management ---
+    function addProfile() {
+      const name = prompt("Enter profile name:");
+      if (!name || profiles[name]) {
+        if (name) alert("Profile name already exists or is empty.");
+        return;
+      }
+      profiles[name] = [];
+      currentProfile = name;
+      saveProfiles();
+      updateProfileSelect();
+      updateTrades();
+      updateOverallProfit();
+      renderProfitChart();
+    }
+
+    function deleteProfile() {
+      if (!currentProfile) {
+        alert("No profile selected to delete.");
+        return;
+      }
+      if (!confirm(`Delete profile "${currentProfile}" and all its trades?`)) return;
+      delete profiles[currentProfile];
+      currentProfile = Object.keys(profiles)[0] || "";
+      saveProfiles();
+      updateProfileSelect();
+      updateTrades();
+      updateOverallProfit();
+      renderProfitChart();
+    }
+
+    function updateProfileSelect() {
+      const select = document.getElementById("profileSelect");
+      select.innerHTML = "";
+      if (Object.keys(profiles).length === 0) {
+        const option = document.createElement("option");
+        option.textContent = "No Profiles";
+        option.value = "";
+        select.appendChild(option);
+      } else {
+        for (const name in profiles) {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          if (name === currentProfile) option.selected = true;
+          select.appendChild(option);
+        }
+      }
+      document.getElementById("currentProfile").textContent = currentProfile || "None";
+    }
+
+    document.getElementById("profileSelect").addEventListener("change", e => {
+      currentProfile = e.target.value;
+      updateTrades();
+      updateOverallProfit(); // Update overall profit when profile changes
+      renderProfitChart(); // Re-render chart when profile changes
+    });
+
+    // --- Trade Management ---
+    function addTrade() {
+      if (!currentProfile) {
+        alert("Select or add a profile first!");
+        return;
+      }
+
+      const symbol = document.getElementById("symbol").value.trim();
+      const buy = parseFloat(document.getElementById("buy").value);
+      const sell = parseFloat(document.getElementById("sell").value);
+      const amount = parseFloat(document.getElementById("amountUsed").value);
+      const leverage = parseFloat(document.getElementById("leverage").value);
+      const direction = document.getElementById("direction").value;
+      const date = new Date().toISOString().split('T')[0]; // Current date in YYYY-MM-DD format
+
+      if (!symbol || isNaN(buy) || isNaN(sell) || isNaN(amount) || isNaN(leverage)) {
+        alert("Please fill in all fields with valid numbers.");
+        return;
+      }
+
+      let profitPercent = direction === "long" ? ((sell - buy) / buy) * 100 : ((buy - sell) / buy) * 100;
+      let profit = (profitPercent / 100) * amount * leverage;
+
+      const trade = { symbol, buy, sell, amount, leverage, direction, profit, profitPercent, date };
+      profiles[currentProfile].push(trade);
+      saveProfiles();
+      updateTrades();
+      updateOverallProfit();
+      renderProfitChart();
+
+      // Clear form fields
+      document.getElementById("symbol").value = "";
+      document.getElementById("buy").value = "";
+      document.getElementById("sell").value = "";
+      document.getElementById("amountUsed").value = "";
+      document.getElementById("leverage").value = "";
+    }
+
+    function deleteTrade(index) {
+      if (!currentProfile) return;
+      if (!confirm("Are you sure you want to delete this trade?")) return;
+      profiles[currentProfile].splice(index, 1);
+      saveProfiles();
+      updateTrades();
+      updateOverallProfit();
+      renderProfitChart();
+    }
+
+    function updateTrades() {
+      const tableBody = document.querySelector("#tradesTable tbody");
+      tableBody.innerHTML = "";
+      if (!currentProfile || !profiles[currentProfile]) return;
+
+      profiles[currentProfile].forEach((trade, index) => {
+        const row = document.createElement("tr");
+        const profitClass = trade.profit >= 0 ? 'profit-positive' : 'profit-negative';
+        row.innerHTML = `
+          <td>${trade.symbol}</td>
+          <td>${trade.buy}</td>
+          <td>${trade.sell}</td>
+          <td>${trade.direction}</td>
+          <td>${trade.amount}</td>
+          <td>${trade.leverage}x</td>
+          <td class="${profitClass}">₹ ${trade.profit.toFixed(2)}</td>
+          <td class="${profitClass}">${trade.profitPercent.toFixed(2)}%</td>
+          <td>${trade.date || 'N/A'}</td>
+          <td><button onclick="deleteTrade(${index})">❌</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      document.getElementById("currentProfile").textContent = currentProfile;
+    }
+
+    // --- Overall Profit Calculation for Home Screen ---
+    function updateOverallProfit() {
+      let totalProfit = 0;
+      for (const profileName in profiles) {
+        profiles[profileName].forEach(trade => {
+          totalProfit += trade.profit;
+        });
+      }
+      const overallProfitSpan = document.querySelector("#overallProfit span");
+      overallProfitSpan.textContent = `₹ ${totalProfit.toFixed(2)}`;
+      overallProfitSpan.className = totalProfit >= 0 ? 'profit-positive' : 'profit-negative';
+    }
+
+    // --- 6-Month Profit Graph (Chart.js) ---
+    function getMonthlyProfitsForGraph() {
+      const monthlyProfits = {};
+      const today = new Date();
+
+      // Initialize last 6 months with 0 profit
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthYear = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        monthlyProfits[monthYear] = 0;
+      }
+
+      // Aggregate profits from all trades
+      for (const profileName in profiles) {
+        profiles[profileName].forEach(trade => {
+          if (trade.date) {
+            const tradeDate = new Date(trade.date);
+            const monthYear = `${tradeDate.getFullYear()}-${(tradeDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            if (monthlyProfits.hasOwnProperty(monthYear)) {
+              monthlyProfits[monthYear] += trade.profit;
+            }
+          }
+        });
+      }
+
+      // Sort months for consistent graph display
+      const sortedMonths = Object.keys(monthlyProfits).sort();
+      const labels = sortedMonths.map(monthYear => {
+        const [year, month] = monthYear.split('-');
+        const date = new Date(year, month - 1);
+        return date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      });
+      const data = sortedMonths.map(monthYear => monthlyProfits[monthYear]);
+
+      return { labels, data };
+    }
+
+    function renderProfitChart() {
+      const { labels, data } = getMonthlyProfitsForGraph();
+      const ctx = document.getElementById('profitChart').getContext('2d');
+
+      if (profitChartInstance) {
+        profitChartInstance.destroy(); // Destroy existing chart instance before creating a new one
+      }
+
+      profitChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Monthly Profit (₹)',
+            data: data,
+            backgroundColor: data.map(profit => profit >= 0 ? 'rgba(0, 200, 83, 0.8)' : 'rgba(255, 0, 0, 0.8)'), // Green for profit, red for loss
+            borderColor: data.map(profit => profit >= 0 ? 'rgba(0, 200, 83, 1)' : 'rgba(255, 0, 0, 1)'),
+            borderWidth: 1,
+            borderRadius: 5, // Rounded bars
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false, // Allow chart to fill container
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#bbb', // Y-axis label color
+                callback: function(value) {
+                    return '₹ ' + value.toLocaleString(); // Format Y-axis ticks
+                }
+              },
+              grid: {
+                color: '#333', // Y-axis grid lines
+              }
+            },
+            x: {
+              ticks: {
+                color: '#bbb', // X-axis label color
+              },
+              grid: {
+                display: false, // Hide X-axis grid lines
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false, // Hide legend
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    label += '₹ ' + context.parsed.y.toFixed(2);
+                  }
+                  return label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- Percentage Calculator (renamed "Profit Calculator" in UI) ---
+    function calculatePercentage() {
+      const percent = parseFloat(document.getElementById("percentValue").value);
+      const base = parseFloat(document.getElementById("baseValue").value);
+      const resultSpan = document.getElementById("percentageResult");
+
+      if (isNaN(percent) || isNaN(base)) {
+        resultSpan.textContent = "Please enter valid numbers.";
+        return;
+      }
+
+      const result = (percent / 100) * base;
+      resultSpan.textContent = result.toFixed(2);
+    }
+
+    // --- Initialize on Load ---
+    window.onload = function() {
+      loadProfiles();
+      showPage('homeScreen'); // Show home screen by default
+    };
+  </script>
+</body>
+</html>
